@@ -135,6 +135,40 @@ except Exception as e:
 
 ![img](images/rag.png)
 
+아래 코드는 Prompt template을 생성하고 질문에 답변하는 gpt 모델을 설정하는 부분이다. 여기서는 GPT-4를 기본으로 사용하고 있다. prompt template에 대해서는 [여기](https://python.langchain.com/docs/expression_language/cookbook/prompt_llm_parser)를 참고한다.
+
+```python
+template = """아래의 context 내용을 기반으로 답변합니다. 만약 context에서 내용을
+찾을 수 없다면 "죄송합니다. 답변을 찾을 수가 없습니다."로 답변을 합니다.
+:{context}
+
+Question: {question}
+""" 
+
+prompt = ChatPromptTemplate.from_template(template)
+llm = ChatOpenAI(api_key=os.environ.get("API_KEY", "<your OpenAI API key if not set as env var>"),
+                 model=GPT_MODEL)
+
+# RAG pipeline
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+```
+위 코드에서 `retriever`는 사용자 질문과 가장 유사한 문장을 벡터 데이터베이스에서 검색하여 prompt template에 전달해 주는 역할을 한다. `RunnablePassthrough()`를 사용하여 사용자 질문문장을 그대로 prompt template에 전달하여 최종적으로 LLM에 전달하는 문장을 완성한다. 예를 들어 "훈민정음은 누가 창제했나요?"라고 질문을 하면 다음과 같이 템플릿을 완성하여 전달한다.
+
+```bash
+아래의 context 내용을 기반으로 답변합니다. 만약 context에서 내용을
+찾을 수 없다면 "죄송합니다. 답변을 찾을 수가 없습니다."로 답변을 합니다.
+:여기에 retriever가 검색한 문장 추가됨
+
+Question: 훈민정음은 누가 창제했나요?
+```
+
+결국 gpt는 위와 같이 질문뿐만 아니라 질문과 가장 유사한 문장과 함께 입력받아 그것을 보고 답변을 하는 것이다. 이것이 RAG의 핵심내용이다.
+
 마지막으로 사용자 질문을 터미널에서 입력받아 LLM에 전달하는 코드이다.
 
 ```python
