@@ -1,5 +1,7 @@
 # LLM (Large Lnaguage Model) 애플리케이션 개발
 
+Github permission 에러 발생 시 [ssh-key 추가하기](https://medium.com/@su_bak/git-github-com-permission-denied-publickey-%EC%97%90%EB%9F%AC-%ED%95%B4%EA%B2%B0-%EB%B0%A9%EB%B2%95-76b0ab741c62) 를 참고한다.
+
 **목차**
 - [개발 환경 설정](#개발-환경-설정)
 - [파이썬 모듈 설치하기](#파이썬-모듈-설치하기)
