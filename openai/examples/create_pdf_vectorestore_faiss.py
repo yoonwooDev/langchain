@@ -21,6 +21,7 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,
                                                chunk_overlap=200,
                                                add_start_index=True)
 texts = text_splitter.split_documents(documents)
+# GPT 모델을 입력하지 않으면 기본으로 "text-embedding-ada-002"가 사용됨
 embeddings = OpenAIEmbeddings(api_key=os.environ.get("API_KEY", "<your OpenAI API key if not set as env var>"))  
  
 try:

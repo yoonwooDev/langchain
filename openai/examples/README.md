@@ -1,5 +1,7 @@
 # Q&A with RAG
 
+RAG (Retrieval Augmented Generation)이란 사용자가 질문을 할 때 LLM은 자동으로 질문 문장과 가장 유사한 문장을 벡터 데이터베이스에서 검색해서 LLM에 사용자 질문과 같이 입력으로 전달하고 LLM이 검색된 문장을 힌트로 삼아 질문에 답하는 방식을 의미한다.
+
 **목차**
 - [파이썬 소스코드](#파이썬-소스코드)
 - [참고할 만한 사이트](#참고할-만한-사이트)
@@ -86,6 +88,62 @@ try:
 except Exception as e:
     print("Faiss store failed \n", e)
 ```
-소스코드에서 지정한 경로에 실제 faiss db가 생성되었는지 확인해 본다.
+소스코드에서 지정한 경로에 실제 faiss db가 생성되었는지 확인해 본다. PDF파일을 불러와서 벡터 데이터 생성하는 절차는 다음과 같이 정리할 수 있다.
+
+![img](images/retrieval-step.png)
+
+- `Load`: 데이터를 [DocumentLoaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/)를 이용하여 로드하는 작업
+- `Split`: [Text SPlitters](https://python.langchain.com/docs/modules/data_connection/document_transformers/)를 이용하여 대량의 document를 작은 chunk 단위로 쪼개는 작업
+- `Store`: chunk단위로 조각난 데이터를 저장하고 인덱싱하는 작업으로 [Embedding](https://python.langchain.com/docs/modules/data_connection/text_embedding/) 모델을 이용해서 vector data를 생성하고 [VectorStore](https://python.langchain.com/docs/modules/data_connection/vectorstores/)에 저장
+
+- `Retrieve`: 사용자의 질의가 있을대 [Retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/)를 이용하여 위에서 생성한 저장소에서 연관데이터를 검색하고 가져오는 작업
+- `Generate`: LLM이 사용자의 질문과 연관된 데이터를 수집하여 prompt를 생성하고 그에 상응하는 대답을 생성 하는 작업
 
 ## 벡터 데이터 탐색 및 질의응답
+- 해당 소스 코드: `qa_pdf_vectorestore_faiss.py`
+`create_pdf_vectorstore_faiss.py`가 정상적으로 실행되었다면, `data/faiss_db/chatpdf` DB가 생성되며 이제 사용자 질문에 응답하는 코드를 작성한다.
+
+질의응답을 위해 사용하는 AI모델은 아래 코드와 같이, GPT4 또는 GPT3를 선택할 수 있다. 좀 더 정확한 답변을 위해서는 GPT4를 사용하는 것이 좋다.
+
+```python
+# GPT_MODEL = "gpt-3.5-turbo"
+GPT_MODEL = "gpt-4"
+```
+사용할 벡터 데이터베이스는 아래 코드와 같이 앞서 생성한 위치를 지정한다.
+
+```python
+faiss_db_path = "openai/examples/data/faiss_db/"
+faiss_index_name = "chatpdf"
+```
+FAISS 데이터베이스를 저장하는 방법은 `faiss_db.save_local`을 이용하는 반면에 다시 불러오기 위해서는 아래 코드와 같이 작성한다. 저장할 때와 동일한 embedding model을 사용하여 로드한다.
+
+```python
+embeddings = OpenAIEmbeddings(api_key=os.environ.get("API_KEY", "<your OpenAI API key if not set as env var>"))    
+
+try:
+    faiss_db = FAISS.load_local(faiss_db_path, embeddings, index_name=faiss_index_name)
+    print("Faiss db loaded")
+except Exception as e:
+    print("Faiss db loading failed \n", e)
+```
+
+이제 vectore store (FAISS DB)를 좀 더 쉽게 사용하기 위해 langchain에서 제공하는 retriever를 이용할 수 있다. 여기서는 간단하게 [vectore store-backed retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/vectorstore) 를 사용한다. Vectore store retriever는 백터 데이터베이스 앞단에 retriever라는 것을 두어 코드에서 좀 더 쉽게 벡터 데이터를 불러와서 사용할 수 있도록 한다.
+
+![img](images/vectorestore.png)
+
+즉, 사용자가 질문을 하면 retriever가 앞서 pdf 파일을 임베딩 벡터 데이터로 변환한 것 처럼 동일하게 자동으로 사용자 질문을 벡터 데이터로 변환하고 벡터 데이터베이스에서 검색을 해서 가장 비슷한 벡터값을 찾아 그 값에 해당하는 문장을 찾아 온다. 그리고 검색한 문장을 prompt에 붙혀 알아서 LLM에 질문을 한다. 마지막으로 LLM은 검색된 문장을 이용해서 답변을 한다. 이것은 마치 책을 펴 놓고 문제에 답을 찾아 대답하는 것과 동일한 논리이다. 아래 그림은 RAG 동작 방식을 나타낸다.
+
+![img](images/rag.png)
+
+마지막으로 사용자 질문을 터미널에서 입력받아 LLM에 전달하는 코드이다.
+
+```python
+while True:
+    user_question = input("Question (Type 'q' to quit): ")
+    if user_question.lower() == 'q':
+        break
+    # print(chain.invoke("What is the number of training tokens for LLaMA2?")) 
+    print(chain.invoke(user_question)) 
+```
+
+`q`를 입력할 때 까지 사용자가 질문을 입력할 수 있다.

@@ -8,7 +8,6 @@ from langchain_core.runnables import RunnablePassthrough
 import os
 
 # models (refer to https://platform.openai.com/docs/models/embeddings)
-EMBEDDING_MODEL = "text-embedding-ada-002"
 # GPT_MODEL = "gpt-3.5-turbo"
 GPT_MODEL = "gpt-4"
 
