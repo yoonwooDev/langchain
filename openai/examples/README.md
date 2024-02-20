@@ -1,6 +1,6 @@
 # Q&A with RAG
 
-RAG (Retrieval Augmented Generation)이란 사용자가 질문을 할 때 LLM은 자동으로 질문 문장과 가장 유사한 문장을 벡터 데이터베이스에서 검색해서 LLM에 사용자 질문과 같이 입력으로 전달하고 LLM이 검색된 문장을 힌트로 삼아 질문에 답하는 방식을 의미한다.
+RAG (Retrieval Augmented Generation)이란 사용자가 질문을 할 때 LLM은 자동으로 질문 문장과 가장 유사한 문장을 벡터 데이터베이스에서 검색해서 LLM에 사용자 질문과 같이 입력으로 전달하고 LLM이 검색된 문장을 힌트로 삼아 질문에 답하는 방식이다.
 
 **목차**
 - [파이썬 소스코드](#파이썬-소스코드)
@@ -53,7 +53,7 @@ data_path = "openai/examples/data/"
 training_data = data_path + "chosun-history.pdf"
 ```
 
-여기서는 `chosun-history.pdf` 파일을 읽어와 벡터 데이터를 만들어 FAISS를 이용하여 로컬 필시에 저장할 것이다.
+여기서는 `chosun-history.pdf` 파일을 읽어와 벡터 데이터를 만들어 FAISS를 이용하여 자신의 로컬 컴퓨터에 저장한다.
 
 이제 `PyPDFLoader`를 이용해서 PDf파일을 로드한다.
 ```python
@@ -63,7 +63,7 @@ VSCODE 디버거를 이용해서 반환되는 `documents`를 살펴 보면 아�
 
 ![img](images/document.png)
 
-`chosun-history.pdf` 파일은 총 7장으로 구성되어 있고 각 페이지의 내용이 `Document`객체로 만들어져 있다. `Document`객체는 `page_content`와 metadata로 구성된 객체이다. 그런데 한 페이지마다 글자수가 너무 많아 openai model에 모두 입력되지 않는 경우가 있다. 각각의 openai model은 한번에 처리할 수 있는 토큰수가 정해져 있다. (참고: https://platform.openai.com/docs/models/models) 따라서, 한 페이지 분량의 글자를 작은 단위로 쪼개는 작업이 필요하고 쪼개는 작은 단위를 각각 chunk라고 한다. 아래 코드는 랭체인에서 제공하는 splitter를 이용해서 documents를 chunk단위로 쪼개는 작업을 수행한다. 1개의 chunk는 최대 1000개의 문자를 포함하며 각각의 chunk마다 200개 문자를 중첩해서 가지도록 설정하였다. (LLM이 좀 더 연관있는 chunk를 구분하고 탐색하기 위해)
+`chosun-history.pdf` 파일은 총 7장으로 구성되어 있고 각 페이지의 내용이 `Document`객체로 만들어져 있다. `Document`객체는 `page_content`와 metadata로 구성된 객체이다. 그런데 한 페이지마다 글자수가 너무 많아 openai model에 모두 입력되지 않는 경우가 있다. 각각의 openai model은 한번에 처리할 수 있는 토큰수가 정해져 있다. (참고: https://platform.openai.com/docs/models/models) 따라서, 한 페이지 분량의 글자를 작은 단위로 쪼개는 작업이 필요하고 쪼개진 작은 단위를 각각 chunk라고 한다. 아래 코드는 랭체인에서 제공하는 splitter를 이용해서 documents를 chunk단위로 쪼개는 작업을 수행한다. 1개의 chunk는 최대 1000개의 문자를 포함하며 각각의 chunk마다 200개 문자를 중첩해서 가지도록 설정하였다. (LLM이 좀 더 연관있는 chunk를 구분하고 탐색하기 위해)
 
 ```python
 text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,
@@ -131,7 +131,7 @@ except Exception as e:
 
 ![img](images/vectorestore.png)
 
-즉, 사용자가 질문을 하면 retriever가 앞서 pdf 파일을 임베딩 벡터 데이터로 변환한 것 처럼 동일하게 자동으로 사용자 질문을 벡터 데이터로 변환하고 벡터 데이터베이스에서 검색을 해서 가장 비슷한 벡터값을 찾아 그 값에 해당하는 문장을 찾아 온다. 그리고 검색한 문장을 prompt에 붙혀 알아서 LLM에 질문을 한다. 마지막으로 LLM은 검색된 문장을 이용해서 답변을 한다. 이것은 마치 책을 펴 놓고 문제에 답을 찾아 대답하는 것과 동일한 논리이다. 아래 그림은 RAG 동작 방식을 나타낸다.
+즉, 사용자가 질문을 하면 retriever가 앞서 pdf 파일을 임베딩 벡터 데이터로 변환한 것 처럼 동일하게 자동으로 사용자 질문을 벡터 데이터로 변환하고 벡터 데이터베이스에서 검색을 해서 가장 비슷한 벡터값을 찾아 그 값에 해당하는 문장을 찾아 온다. 그리고 검색한 문장을 prompt에 붙혀서 LLM에 질문을 한다. 마지막으로 LLM은 검색된 문장을 이용해서 답변을 한다. 이것은 마치 책을 펴 놓고 문제에 답을 찾아 대답하는 것과 동일한 논리이다. 아래 그림은 RAG 동작 방식을 나타낸다.
 
 ![img](images/rag.png)
 
@@ -157,12 +157,12 @@ chain = (
     | StrOutputParser()
 )
 ```
-위 코드에서 `retriever`는 사용자 질문과 가장 유사한 문장을 벡터 데이터베이스에서 검색하여 prompt template에 전달해 주는 역할을 한다. `RunnablePassthrough()`를 사용하여 사용자 질문문장을 그대로 prompt template에 전달하여 최종적으로 LLM에 전달하는 문장을 완성한다. 예를 들어 "훈민정음은 누가 창제했나요?"라고 질문을 하면 다음과 같이 템플릿을 완성하여 전달한다.
+위 코드에서 `retriever`는 사용자 질문과 가장 유사한 문장을 벡터 데이터베이스에서 검색하여 prompt template에 전달해 주는 역할을 한다. `RunnablePassthrough()`를 사용하여 사용자 질문 문장을 그대로 prompt template에 전달하여 최종적으로 LLM에 전달하는 문장을 완성한다. 예를 들어 "훈민정음은 누가 창제했나요?"라고 질문을 하면 다음과 같이 템플릿을 완성하여 전달한다.
 
 ```bash
-아래의 context 내용을 기반으로 답변합니다. 만약 context에서 내용을
-찾을 수 없다면 "죄송합니다. 답변을 찾을 수가 없습니다."로 답변을 합니다.
-:여기에 retriever가 검색한 문장 추가됨
+아래의 context 내용을 기반으로 답변합니다. 만약 context에서 내용을 찾을 수 없다면 "죄송합니다. 답변을 찾을 수가 없습니다."로 답변을 합니다.
+
+:여기에 retriever가 검색한 문장이 추가됨
 
 Question: 훈민정음은 누가 창제했나요?
 ```
