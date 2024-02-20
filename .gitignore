@@ -116,7 +116,7 @@ share/
 bin/
 nltk_data/
 natural-lang-process/ted_en-20160408.xml
-examples/data/faiss_db
+examples/data/faiss_db/
 
 # data
 # data/w2v
