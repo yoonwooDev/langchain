@@ -8,10 +8,9 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 
-faiss_db_path = "openai/examples/data/faiss_db/"
+faiss_db_path = "examples/data/faiss_db/"
 faiss_index_name = "chatpdf"
-data_path = "openai/examples/data/"
-training_data = data_path + "chosun-history.pdf"
+training_data = "examples/data/chosun-history.pdf"
 
 documents = PyPDFLoader(training_data).load()
 print(f"{len(documents)} documents")

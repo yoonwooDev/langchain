@@ -11,7 +11,7 @@ import os
 # GPT_MODEL = "gpt-3.5-turbo"
 GPT_MODEL = "gpt-4"
 
-faiss_db_path = "openai/examples/data/faiss_db/"
+faiss_db_path = "examples/data/faiss_db/"
 faiss_index_name = "chatpdf"
 
 embeddings = OpenAIEmbeddings(api_key=os.environ.get("API_KEY", "<your OpenAI API key if not set as env var>"))    

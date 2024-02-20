@@ -61,7 +61,7 @@ documents = PyPDFLoader(training_data).load()
 ```
 VSCODE 디버거를 이용해서 반환되는 `documents`를 살펴 보면 아래 그림과 같이 `Document` 타입의 객체로 구성된 배열이라는 것을 알 수 있다. PyPDFLoader.load()함수는 각 페이지마다 Document객체를 생성하여 리턴한다.
 
-![img](images/document.png)
+![img](../images/document.png)
 
 `chosun-history.pdf` 파일은 총 7장으로 구성되어 있고 각 페이지의 내용이 `Document`객체로 만들어져 있다. `Document`객체는 `page_content`와 metadata로 구성된 객체이다. 그런데 한 페이지마다 글자수가 너무 많아 openai model에 모두 입력되지 않는 경우가 있다. 각각의 openai model은 한번에 처리할 수 있는 토큰수가 정해져 있다. (참고: https://platform.openai.com/docs/models/models) 따라서, 한 페이지 분량의 글자를 작은 단위로 쪼개는 작업이 필요하고 쪼개진 작은 단위를 각각 chunk라고 한다. 아래 코드는 랭체인에서 제공하는 splitter를 이용해서 documents를 chunk단위로 쪼개는 작업을 수행한다. 1개의 chunk는 최대 1000개의 문자를 포함하며 각각의 chunk마다 200개 문자를 중첩해서 가지도록 설정하였다. (LLM이 좀 더 연관있는 chunk를 구분하고 탐색하기 위해)
 
@@ -74,7 +74,7 @@ texts = text_splitter.split_documents(documents)
 
 디버거로 리턴값 `texts`를 확인해 보면 아래와 같다.
 
-![img](images/split_texts.png)
+![img](../images/split_texts.png)
 
 위에서 documents와 비교해 보면 더 작은 단위로 쪼개져 document 객체가 12개로 늘어난 것을 볼 수 있다. 이제 잘게 쪼갠 chunk데이터를 embedding 모델에 입력으로 넣어 주어 임베딩 벡터 데이터를 만들도록 한다. 그리고 FAISS 데이터베이스를 생성하여 만들어진 벡터 데이터를 로컬 피시에 저장한다.
 
@@ -90,7 +90,7 @@ except Exception as e:
 ```
 소스코드에서 지정한 경로에 실제 faiss db가 생성되었는지 확인해 본다. PDF파일을 불러와서 벡터 데이터 생성하는 절차는 다음과 같이 정리할 수 있다.
 
-![img](images/retrieval-step.png)
+![img](../images/retrieval-step.png)
 
 - `Load`: 데이터를 [DocumentLoaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/)를 이용하여 로드하는 작업
 - `Split`: [Text SPlitters](https://python.langchain.com/docs/modules/data_connection/document_transformers/)를 이용하여 대량의 document를 작은 chunk 단위로 쪼개는 작업
@@ -129,11 +129,11 @@ except Exception as e:
 
 이제 vectore store (FAISS DB)를 좀 더 쉽게 사용하기 위해 langchain에서 제공하는 retriever를 이용할 수 있다. 여기서는 간단하게 [vectore store-backed retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/vectorstore) 를 사용한다. Vectore store retriever는 백터 데이터베이스 앞단에 retriever라는 것을 두어 코드에서 좀 더 쉽게 벡터 데이터를 불러와서 사용할 수 있도록 한다.
 
-![img](images/vectorestore.png)
+![img](../images/vectorestore.png)
 
 즉, 사용자가 질문을 하면 retriever가 앞서 pdf 파일을 임베딩 벡터 데이터로 변환한 것 처럼 동일하게 자동으로 사용자 질문을 벡터 데이터로 변환하고 벡터 데이터베이스에서 검색을 해서 가장 비슷한 벡터값을 찾아 그 값에 해당하는 문장을 찾아 온다. 그리고 검색한 문장을 prompt에 붙혀서 LLM에 질문을 한다. 마지막으로 LLM은 검색된 문장을 이용해서 답변을 한다. 이것은 마치 책을 펴 놓고 문제에 답을 찾아 대답하는 것과 동일한 논리이다. 아래 그림은 RAG 동작 방식을 나타낸다.
 
-![img](images/rag.png)
+![img](../images/rag.png)
 
 아래 코드는 Prompt template을 생성하고 질문에 답변하는 gpt 모델을 설정하는 부분이다. 여기서는 GPT-4를 기본으로 사용하고 있다. prompt template에 대해서는 [여기](https://python.langchain.com/docs/expression_language/cookbook/prompt_llm_parser)를 참고한다.
 
